@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ddstylists-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/ddstylists
+      - NODE_ENV=production
+      - JWT_SECRET=\${JWT_SECRET:-super_secret_jwt_key_here}
+      - STRIPE_SECRET_KEY=\${STRIPE_SECRET_KEY:-your_stripe_secret_key}
+      - RAZORPAY_KEY_ID=\${RAZORPAY_KEY_ID:-your_razorpay_key_id}
+      - RAZORPAY_KEY_SECRET=\${RAZORPAY_KEY_SECRET:-your_razorpay_key_secret}
+    networks:
+      - backend-network
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:6-jammy
+    container_name: ddstylists-mongodb
+    restart: unless-stopped
+    # Database is isolated to the private Docker network; 
+    # no ports mapped directly to the host machine for security.
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+    # Internal isolate network connecting API and MongoDB
+
+volumes:
+  mongodb_data:
