@@ -27,26 +27,29 @@ class _StylistDetailScreenState extends ConsumerState<StylistDetailScreen> {
     }
   }
 
-  void _bookAppointment() {
+  void _bookAppointment() async {
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a date')));
       return;
     }
-    ref.read(bookingsProvider.notifier).addBooking(Booking(
-      id: 'b_${DateTime.now().millisecondsSinceEpoch}',
+    final success = await createAppointment(
       stylistId: widget.stylist.id,
-      stylistName: widget.stylist.fullName,
-      stylistImage: widget.stylist.profileImage,
-      service: _selectedService?.name ?? 'Style Session',
-      date: _selectedDate!,
+      date: _selectedDate!.toIso8601String(),
       time: _selectedTime,
-      status: 'Upcoming',
-      price: _selectedService?.price ?? 50,
-    ));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Booked with ${widget.stylist.fullName}!')),
+      packageType: _selectedService?.packageType ?? 'Custom',
     );
-    Navigator.of(context).pop();
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Booked with ${widget.stylist.name}!')),
+      );
+      // Refresh bookings
+      ref.invalidate(bookingsProvider);
+      Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking failed. Please try again.')),
+      );
+    }
   }
 
   @override
@@ -93,7 +96,7 @@ class _StylistDetailScreenState extends ConsumerState<StylistDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(s.fullName, style: GoogleFonts.playfairDisplay(
+                              Text(s.name, style: GoogleFonts.playfairDisplay(
                                 fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white,
                                 fontStyle: FontStyle.italic,
                               )),

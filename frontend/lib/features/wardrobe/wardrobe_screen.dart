@@ -10,9 +10,8 @@ class WardrobeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(wardrobeCategoriesProvider);
-    final selectedCategory = ref.watch(selectedWardrobeCategoryProvider);
-    final items = ref.watch(filteredWardrobeProvider);
-    final allItems = ref.watch(wardrobeProvider);
+    final selectedCategory = ref.watch(wardrobeCategoryProvider);
+    final itemsAsync = ref.watch(wardrobeItemsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.black,
@@ -40,16 +39,20 @@ class WardrobeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             // Stats
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _stat('Items', '${allItems.length}'),
-                  Container(width: 1, height: 30, color: AppColors.greyDark, margin: const EdgeInsets.symmetric(horizontal: 32)),
-                  _stat('Outfit', '${(allItems.length / 3).ceil()}'),
-                ],
+            itemsAsync.when(
+              data: (items) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _stat('Items', '${items.length}'),
+                    Container(width: 1, height: 30, color: AppColors.greyDark, margin: const EdgeInsets.symmetric(horizontal: 32)),
+                    _stat('Outfit', '${(items.length / 3).ceil()}'),
+                  ],
+                ),
               ),
+              loading: () => const SizedBox(height: 48), // Match row height approximately
+              error: (_, __) => const SizedBox(height: 48),
             ),
             const SizedBox(height: 20),
             // Category chips
@@ -63,7 +66,7 @@ class WardrobeScreen extends ConsumerWidget {
                   final cat = categories[i];
                   final isSelected = cat == selectedCategory;
                   return GestureDetector(
-                    onTap: () => ref.read(selectedWardrobeCategoryProvider.notifier).state = cat,
+                    onTap: () => ref.read(wardrobeCategoryProvider.notifier).state = cat,
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
@@ -83,20 +86,23 @@ class WardrobeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: items.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.checkroom_outlined, color: AppColors.greyDark, size: 64),
-                        const SizedBox(height: 16),
-                        const Text('No items yet', style: TextStyle(color: Colors.white, fontSize: 18)),
-                        const SizedBox(height: 8),
-                        const Text('Add clothes to your wardrobe', style: TextStyle(color: AppColors.greyLight, fontSize: 14)),
-                      ],
-                    ),
-                  )
-                : GridView.builder(
+              child: itemsAsync.when(
+                data: (items) {
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.checkroom_outlined, color: AppColors.greyDark, size: 64),
+                          const SizedBox(height: 16),
+                          const Text('No items yet', style: TextStyle(color: Colors.white, fontSize: 18)),
+                          const SizedBox(height: 8),
+                          const Text('Add clothes to your wardrobe', style: TextStyle(color: AppColors.greyLight, fontSize: 14)),
+                        ],
+                      ),
+                    );
+                  }
+                  return GridView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -108,7 +114,11 @@ class WardrobeScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       return _WardrobeItemCard(item: items[index]);
                     },
-                  ),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+                error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+              ),
             ),
           ],
         ),

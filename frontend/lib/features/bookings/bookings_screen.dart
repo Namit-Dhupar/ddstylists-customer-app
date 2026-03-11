@@ -9,8 +9,8 @@ class BookingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedTab = ref.watch(selectedBookingTabProvider);
-    final bookings = ref.watch(filteredBookingsProvider);
+    final selectedTab = ref.watch(bookingTabProvider);
+    final bookingsAsync = ref.watch(bookingsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.black,
@@ -34,7 +34,7 @@ class BookingsScreen extends ConsumerWidget {
                 children: ['Upcoming', 'Completed', 'Cancelled'].map((tab) {
                   final isSelected = tab == selectedTab;
                   return GestureDetector(
-                    onTap: () => ref.read(selectedBookingTabProvider.notifier).state = tab,
+                    onTap: () => ref.read(bookingTabProvider.notifier).state = tab,
                     child: Container(
                       margin: const EdgeInsets.only(right: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -57,31 +57,38 @@ class BookingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: bookings.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.calendar_today_outlined, color: AppColors.greyDark, size: 64),
-                        const SizedBox(height: 16),
-                        const Text('No Appointments', style: TextStyle(
-                          color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600,
-                        )),
-                        const SizedBox(height: 8),
-                        const Text('Explore Stylists and make\nyour first appointment',
-                          style: TextStyle(color: AppColors.greyLight, fontSize: 14),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
+              child: bookingsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+                error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white))),
+                data: (bookings) {
+                  if (bookings.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today_outlined, color: AppColors.greyDark, size: 64),
+                          const SizedBox(height: 16),
+                          const Text('No Appointments', style: TextStyle(
+                            color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600,
+                          )),
+                          const SizedBox(height: 8),
+                          const Text('Explore Stylists and make\nyour first appointment',
+                            style: TextStyle(color: AppColors.greyLight, fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: bookings.length,
                     itemBuilder: (context, index) {
                       return _BookingCard(booking: bookings[index]);
                     },
-                  ),
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -108,9 +115,10 @@ class _BookingCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(booking.stylistImage, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: AppColors.cardDark),
-            ),
+            booking.stylistImage.isNotEmpty
+                ? Image.network(booking.stylistImage, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(color: AppColors.cardDark))
+                : Container(color: AppColors.cardDark),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -132,13 +140,16 @@ class _BookingCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(booking.service, style: const TextStyle(color: AppColors.goldLight, fontSize: 13)),
+                      Text(booking.packageType, style: const TextStyle(color: AppColors.goldLight, fontSize: 13)),
                       const SizedBox(width: 12),
-                      Icon(Icons.calendar_today, color: AppColors.greyLight, size: 12),
+                      const Icon(Icons.calendar_today, color: AppColors.greyLight, size: 12),
                       const SizedBox(width: 4),
-                      Text(
-                        '${_dayName(booking.date)}, ${booking.date.day} ${_monthName(booking.date)}, ${booking.time}',
-                        style: const TextStyle(color: AppColors.greyLight, fontSize: 12),
+                      Flexible(
+                        child: Text(
+                          '${booking.date}, ${booking.time}',
+                          style: const TextStyle(color: AppColors.greyLight, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -150,7 +161,4 @@ class _BookingCard extends StatelessWidget {
       ),
     );
   }
-
-  String _dayName(DateTime d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d.weekday - 1];
-  String _monthName(DateTime d) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.month - 1];
 }

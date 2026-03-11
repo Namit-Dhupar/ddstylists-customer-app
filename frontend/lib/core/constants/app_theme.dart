@@ -99,14 +99,7 @@ class AppTheme {
         showSelectedLabels: false,
         elevation: 0,
       ),
-      cardTheme: CardTheme(
-        color: AppColors.cardDark,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.cardBorder, width: 0.5),
-        ),
-        elevation: 0,
-      ),
+
       useMaterial3: true,
     );
   }

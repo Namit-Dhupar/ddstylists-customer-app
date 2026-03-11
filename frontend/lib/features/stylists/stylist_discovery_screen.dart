@@ -81,32 +81,36 @@ class _StylistDiscoveryScreenState extends ConsumerState<StylistDiscoveryScreen>
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 36,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      itemBuilder: (context, i) {
-                        final cat = categories[i];
-                        final isSelected = cat == selectedCategory;
-                        return GestureDetector(
-                          onTap: () => ref.read(selectedCategoryProvider.notifier).state = cat,
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 10),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppColors.gold : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: isSelected ? AppColors.gold : AppColors.cardBorder),
-                            ),
-                            child: Text(
-                              cat,
-                              style: TextStyle(
-                                color: isSelected ? AppColors.black : AppColors.greyLight,
-                                fontSize: 13, fontWeight: FontWeight.w500,
+                    child: categories.when(
+                      data: (cats) => ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: cats.length,
+                        itemBuilder: (context, i) {
+                          final cat = cats[i];
+                          final isSelected = cat == selectedCategory;
+                          return GestureDetector(
+                            onTap: () => ref.read(selectedCategoryProvider.notifier).state = cat,
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.gold : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: isSelected ? AppColors.gold : AppColors.cardBorder),
+                              ),
+                              child: Text(
+                                cat,
+                                style: TextStyle(
+                                  color: isSelected ? AppColors.black : AppColors.greyLight,
+                                  fontSize: 13, fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
+                      loading: () => const SizedBox(),
+                      error: (_, __) => const SizedBox(),
                     ),
                   ),
                 ],
@@ -222,7 +226,7 @@ class _StylistCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(stylist.fullName, style: const TextStyle(
+                    Text(stylist.name, style: const TextStyle(
                       color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600,
                     )),
                     const SizedBox(height: 2),
