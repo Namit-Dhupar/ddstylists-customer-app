@@ -15,20 +15,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java (Requirement for Android build)
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: zulu
           java-version: '17'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.x'
-          channel: 'stable'
+          flutter-version: 3.22.x
+          channel: stable
           cache: true
 
-      - name: Clean Flutter Build Cache
+      - name: Clean Gradle Cache
+        run: rm -rf ~/.gradle/caches
+
+      - name: Flutter Clean
         working-directory: ./frontend
         run: flutter clean
 
@@ -36,20 +39,12 @@ jobs:
         working-directory: ./frontend
         run: flutter pub get
 
-      - name: Regenerate Android project files
-        working-directory: ./frontend
-        run: flutter create --platforms=android .
-
-      - name: Patch Android Gradle Configs
-        run: python3 scripts/patch_android.py
-
-      - name: Build APK Release
+      - name: Build APK
         working-directory: ./frontend
         run: flutter build apk --release
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 7
