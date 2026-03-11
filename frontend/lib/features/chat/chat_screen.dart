@@ -230,7 +230,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               message.time,
               style: TextStyle(
-                color: message.isMe ? AppColors.black.withValues(alpha: 0.5) : AppColors.greyMid,
+                color: message.isMe ? AppColors.black.withOpacity( 0.5) : AppColors.greyMid,
                 fontSize: 10,
               ),
             ),
@@ -264,7 +264,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   width: 8, height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.greyMid.withValues(alpha: 0.4 + value * 0.6),
+                    color: AppColors.greyMid.withOpacity( 0.4 + value * 0.6),
                   ),
                 );
               },

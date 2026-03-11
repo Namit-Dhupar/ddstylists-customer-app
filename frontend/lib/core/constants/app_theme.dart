@@ -99,7 +99,7 @@ class AppTheme {
         showSelectedLabels: false,
         elevation: 0,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: AppColors.cardDark,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
