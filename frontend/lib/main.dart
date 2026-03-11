@@ -51,8 +51,8 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     // Listen for logout
-    ref.listen<UserProfile?>(authProvider, (prev, next) {
-      if (prev != null && next == null) {
+    ref.listen<AuthState>(authProvider, (prev, next) {
+      if (prev?.isAuthenticated == true && !next.isAuthenticated) {
         _navigateTo(AppScreen.onboarding);
       }
     });

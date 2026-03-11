@@ -27,12 +27,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     setState(() => _loading = true);
-    await ref.read(authProvider.notifier).login(
+    final success = await ref.read(authProvider.notifier).login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
     setState(() => _loading = false);
-    widget.onLoginSuccess();
+    if (success) {
+      widget.onLoginSuccess();
+    } else {
+      if (mounted) {
+        final error = ref.read(authProvider).error ?? 'Login failed';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      }
+    }
   }
 
   @override

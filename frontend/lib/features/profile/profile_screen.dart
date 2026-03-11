@@ -9,7 +9,13 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+
+    final firstName = user?['firstName'] ?? '';
+    final lastName = user?['lastName'] ?? '';
+    final username = user?['username'] ?? 'guest';
+    final profileImage = user?['profileImage'] as String?;
 
     return Scaffold(
       backgroundColor: AppColors.black,
@@ -18,8 +24,7 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             children: [
               const SizedBox(height: 16),
-              // Header
-              Text('Create your account', style: GoogleFonts.playfairDisplay(
+              Text('My Profile', style: GoogleFonts.playfairDisplay(
                 fontSize: 18, color: AppColors.gold,
               )),
               const SizedBox(height: 24),
@@ -27,34 +32,21 @@ class ProfileScreen extends ConsumerWidget {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: AppColors.cardDark,
-                backgroundImage: user?.profileImage != null
-                  ? NetworkImage(user!.profileImage!)
+                backgroundImage: profileImage != null && profileImage.isNotEmpty
+                  ? NetworkImage(profileImage)
                   : null,
-                child: user?.profileImage == null
+                child: profileImage == null || profileImage.isEmpty
                   ? const Icon(Icons.person, size: 40, color: AppColors.greyMid)
                   : null,
               ),
               const SizedBox(height: 12),
               Text(
-                user != null ? '${user.firstName} ${user.lastName}' : 'Guest',
+                '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName' : 'Guest',
                 style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600),
               ),
               Text(
-                user != null ? '@${user.username}' : '',
+                '@$username',
                 style: const TextStyle(color: AppColors.greyLight, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              // Stats row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 60),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _stat('Items', '${user?.itemCount ?? 0}'),
-                    Container(width: 1, height: 30, color: AppColors.greyDark, margin: const EdgeInsets.symmetric(horizontal: 32)),
-                    _stat('Outfit', '${user?.outfitCount ?? 0}'),
-                  ],
-                ),
               ),
               const SizedBox(height: 32),
               // Settings list
@@ -95,51 +87,25 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _stat(String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: AppColors.greyLight, fontSize: 13)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _settingsGroup(List<_SettingsItem> items) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
-        ),
-        child: Column(
-          children: items.asMap().entries.map((entry) {
-            final i = entry.key;
-            final item = entry.value;
-            return Column(
-              children: [
-                ListTile(
-                  leading: Icon(item.icon, color: AppColors.gold, size: 22),
-                  title: Text(item.title, style: const TextStyle(color: Colors.white, fontSize: 15)),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (item.trailing != null)
-                        Text(item.trailing!, style: const TextStyle(color: AppColors.greyMid, fontSize: 13)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, color: AppColors.greyMid, size: 20),
-                    ],
-                  ),
-                  onTap: item.onTap,
-                ),
-                if (i < items.length - 1)
-                  const Divider(color: AppColors.cardBorder, height: 1, indent: 56),
-              ],
-            );
-          }).toList(),
-        ),
+  static Widget _settingsGroup(List<_SettingsItem> items) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        children: items.map((item) {
+          return ListTile(
+            leading: Icon(item.icon, color: AppColors.gold, size: 22),
+            title: Text(item.title, style: const TextStyle(color: Colors.white, fontSize: 15)),
+            trailing: item.trailing != null
+              ? Text(item.trailing!, style: const TextStyle(color: AppColors.greyMid, fontSize: 14))
+              : const Icon(Icons.chevron_right, color: AppColors.greyMid, size: 20),
+            onTap: item.onTap,
+          );
+        }).toList(),
       ),
     );
   }

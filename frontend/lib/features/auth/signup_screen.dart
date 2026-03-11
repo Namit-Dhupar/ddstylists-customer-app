@@ -24,6 +24,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _dobController = TextEditingController();
   String _stylePreference = 'Both';
   bool _loading = false;
@@ -36,23 +38,31 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _completeSignUp() async {
-    if (_firstNameController.text.isEmpty || _lastNameController.text.isEmpty || _usernameController.text.isEmpty) {
+    if (_firstNameController.text.isEmpty || _lastNameController.text.isEmpty || _usernameController.text.isEmpty || _emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
     setState(() => _loading = true);
-    await ref.read(authProvider.notifier).signUp(
+    final success = await ref.read(authProvider.notifier).register(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       username: _usernameController.text.trim(),
-      email: '${_usernameController.text.trim()}@ddstylists.com',
-      password: 'demo123',
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
       stylePreference: _stylePreference,
+      country: _selectedCountry,
     );
     setState(() => _loading = false);
-    widget.onSignUpSuccess();
+    if (success) {
+      widget.onSignUpSuccess();
+    } else {
+      if (mounted) {
+        final error = ref.read(authProvider).error ?? 'Registration failed';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      }
+    }
   }
 
   @override
@@ -207,6 +217,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           const SizedBox(height: 16),
           _field('Username*', _usernameController),
           const SizedBox(height: 16),
+          _field('Email*', _emailController, hint: 'you@example.com'),
+          const SizedBox(height: 16),
+          _field('Password*', _passwordController, hint: '••••••••', obscure: true),
+          const SizedBox(height: 16),
           _field('Date of Birth*', _dobController, hint: 'DD/MM/YYYY'),
           const SizedBox(height: 24),
           Text('Style preference', style: GoogleFonts.playfairDisplay(
@@ -253,9 +267,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 
-  Widget _field(String label, TextEditingController controller, {String? hint}) {
+  Widget _field(String label, TextEditingController controller, {String? hint, bool obscure = false}) {
     return TextField(
       controller: controller,
+      obscureText: obscure,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,

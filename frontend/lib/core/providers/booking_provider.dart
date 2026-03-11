@@ -1,84 +1,93 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../network/api_config.dart';
 
+/// Booking model
 class Booking {
   final String id;
   final String stylistId;
   final String stylistName;
   final String stylistImage;
-  final String service;
-  final DateTime date;
+  final String stylistSpeciality;
+  final String date;
   final String time;
-  final String status; // Upcoming, Completed, Cancelled
-  final double price;
+  final String status;
+  final String packageType;
+  final String paymentStatus;
 
   Booking({
     required this.id,
     required this.stylistId,
     required this.stylistName,
     required this.stylistImage,
-    required this.service,
+    required this.stylistSpeciality,
     required this.date,
     required this.time,
     required this.status,
-    required this.price,
+    required this.packageType,
+    required this.paymentStatus,
   });
-}
 
-class BookingsNotifier extends StateNotifier<List<Booking>> {
-  BookingsNotifier() : super([]) {
-    _loadBookings();
-  }
+  factory Booking.fromJson(Map<String, dynamic> json) {
+    final stylist = json['stylistId'];
+    String stylistName = 'Stylist';
+    String stylistImage = '';
+    String stylistSpec = '';
+    
+    if (stylist is Map<String, dynamic>) {
+      stylistName = '${stylist['firstName'] ?? ''} ${stylist['lastName'] ?? ''}'.trim();
+      stylistImage = stylist['profileImage'] ?? '';
+      final specs = stylist['speciality'] as List?;
+      stylistSpec = specs?.isNotEmpty == true ? specs!.first : '';
+    }
 
-  Future<void> _loadBookings() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    state = [
-      Booking(
-        id: 'b1', stylistId: 's3', stylistName: 'Emily Carter',
-        stylistImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-        service: 'Wedding', date: DateTime(2025, 3, 22), time: '11:00 am',
-        status: 'Upcoming', price: 75,
-      ),
-      Booking(
-        id: 'b2', stylistId: 's1', stylistName: 'Jenny Wilson',
-        stylistImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-        service: 'Bridal Package', date: DateTime(2025, 2, 15), time: '2:00 pm',
-        status: 'Completed', price: 250,
-      ),
-      Booking(
-        id: 'b3', stylistId: 's6', stylistName: 'Charlotte May',
-        stylistImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
-        service: 'Corporate Package', date: DateTime(2025, 1, 10), time: '10:00 am',
-        status: 'Cancelled', price: 150,
-      ),
-    ];
-  }
-
-  void addBooking(Booking booking) {
-    state = [booking, ...state];
-  }
-
-  void cancelBooking(String id) {
-    state = state.map((b) {
-      if (b.id == id) {
-        return Booking(
-          id: b.id, stylistId: b.stylistId, stylistName: b.stylistName,
-          stylistImage: b.stylistImage, service: b.service,
-          date: b.date, time: b.time, status: 'Cancelled', price: b.price,
-        );
-      }
-      return b;
-    }).toList();
+    return Booking(
+      id: json['_id'] ?? '',
+      stylistId: stylist is Map ? (stylist['_id'] ?? '') : (stylist?.toString() ?? ''),
+      stylistName: stylistName,
+      stylistImage: stylistImage,
+      stylistSpeciality: stylistSpec,
+      date: json['date'] ?? '',
+      time: json['time'] ?? '',
+      status: json['status'] ?? 'Upcoming',
+      packageType: json['packageType'] ?? 'Custom',
+      paymentStatus: json['paymentStatus'] ?? 'Pending',
+    );
   }
 }
 
-final bookingsProvider = StateNotifierProvider<BookingsNotifier, List<Booking>>((ref) {
-  return BookingsNotifier();
+/// Selected booking tab
+final bookingTabProvider = StateProvider<String>((ref) => 'Upcoming');
+
+/// Fetch bookings from backend
+final bookingsProvider = FutureProvider<List<Booking>>((ref) async {
+  final status = ref.watch(bookingTabProvider);
+  try {
+    final dio = ApiConfig.createDio();
+    final response = await dio.get('/appointments', queryParameters: {'status': status});
+    final List<dynamic> data = response.data['appointments'] ?? [];
+    return data.map((json) => Booking.fromJson(json)).toList();
+  } catch (_) {
+    return [];
+  }
 });
 
-final selectedBookingTabProvider = StateProvider<String>((ref) => 'Upcoming');
-
-final filteredBookingsProvider = Provider<List<Booking>>((ref) {
-  final tab = ref.watch(selectedBookingTabProvider);
-  final bookings = ref.watch(bookingsProvider);
-  return bookings.where((b) => b.status == tab).toList();
-});
+/// Create appointment
+Future<bool> createAppointment({
+  required String stylistId,
+  required String date,
+  required String time,
+  String packageType = 'Custom',
+}) async {
+  try {
+    final dio = ApiConfig.createDio();
+    await dio.post('/appointments', data: {
+      'stylistId': stylistId,
+      'date': date,
+      'time': time,
+      'packageType': packageType,
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
