@@ -36,10 +36,13 @@ jobs:
         working-directory: ./frontend
         run: flutter create --platforms=android .
 
-      - name: Update Kotlin Gradle Plugin
+      - name: Patch Android Gradle Configs
         working-directory: ./frontend
         run: |
           sed -i -E 's/id "org.jetbrains.kotlin.android" version ".*" apply false/id "org.jetbrains.kotlin.android" version "1.9.24" apply false/' android/settings.gradle
+          if [ -f "android/build.gradle" ]; then sed -i -E "s/ext.kotlin_version = '.+'/ext.kotlin_version = '1.9.24'/g" android/build.gradle; fi
+          sed -i -E 's/compileSdk .*$/compileSdk 34/' android/app/build.gradle
+          sed -i -E 's/compileSdkVersion .*$/compileSdkVersion 34/' android/app/build.gradle
 
       - name: Build APK Release
         working-directory: ./frontend
