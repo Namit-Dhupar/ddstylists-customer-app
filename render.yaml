@@ -1,0 +1,36 @@
+# Render.com Blueprint — auto-deploy from GitHub
+# https://render.com/docs/infrastructure-as-code
+
+services:
+  - type: web
+    name: dnd-stylists-api
+    runtime: node
+    region: frankfurt  # EU region (close to UK)
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false  # Set manually in dashboard (contains secrets)
+      - key: JWT_SECRET
+        generateValue: true  # Auto-generate a secure random value
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: AGORA_APP_ID
+        sync: false
+      - key: AGORA_APP_CERTIFICATE
+        sync: false
