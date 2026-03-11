@@ -32,6 +32,10 @@ jobs:
         working-directory: ./frontend
         run: flutter pub get
 
+      - name: Regenerate Android project files
+        working-directory: ./frontend
+        run: flutter create --platforms=android .
+
       - name: Build APK Release
         working-directory: ./frontend
         run: flutter build apk --release
