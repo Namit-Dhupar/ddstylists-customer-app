@@ -54,23 +54,13 @@ class HomeScreen extends StatelessWidget {
                         Expanded(
                           child: _buildFeatureCard(
                             context, 'Wardrobe', Icons.checkroom_rounded,
-                            'https://images.unsplash.com/photo-1558816281-705b64df4202?w=600',
+                            null,
                             () => onNavigate(0),
                             height: 160,
+                            assetImage: 'assets/images/wardrobe_card.png',
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFeatureCard(
-                      context, 'Inspirations', Icons.auto_awesome_rounded,
-                      'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600',
-                      () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Inspirations coming soon!')),
-                        );
-                      },
-                      height: 180,
                     ),
                   ],
                 ),
@@ -83,7 +73,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context, String title, IconData icon, String imageUrl, VoidCallback onTap, {double height = 160}) {
+  Widget _buildFeatureCard(BuildContext context, String title, IconData icon, String? imageUrl, VoidCallback onTap, {double height = 160, String? assetImage}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -98,9 +88,16 @@ class HomeScreen extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(imageUrl, fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: AppColors.cardDark),
-              ),
+              if (assetImage != null)
+                Image.asset(assetImage, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(color: AppColors.cardDark),
+                )
+              else if (imageUrl != null)
+                Image.network(imageUrl, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(color: AppColors.cardDark),
+                )
+              else
+                Container(color: AppColors.cardDark),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

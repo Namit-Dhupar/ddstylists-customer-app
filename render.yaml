@@ -1,15 +1,14 @@
-# Render.com Blueprint — auto-deploy from GitHub
+# Render.com Blueprint — Docker-based deployment
 # https://render.com/docs/infrastructure-as-code
 
 services:
   - type: web
     name: dnd-stylists-api
-    runtime: node
-    region: frankfurt  # EU region (close to UK)
+    runtime: docker
+    region: frankfurt  # EU region
     plan: free
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: node server.js
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
