@@ -285,6 +285,30 @@ class _WardrobeItemCardState extends ConsumerState<_WardrobeItemCard> {
       onTap: () {
         if (_showDelete) {
           setState(() => _showDelete = false);
+        } else {
+          // Show full-screen image
+          showDialog(
+            context: context,
+            builder: (_) => Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.all(16),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    widget.item.imageUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.cardDark,
+                      height: 300,
+                      child: const Center(child: Icon(Icons.broken_image, color: AppColors.greyMid, size: 48)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
         }
       },
       child: Container(

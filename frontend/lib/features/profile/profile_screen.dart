@@ -101,7 +101,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final firstName = user?['firstName'] ?? '';
     final lastName = user?['lastName'] ?? '';
     final username = user?['username'] ?? 'guest';
-    final profileImage = user?['profileImage'] as String?;
+    final rawProfileImage = user?['profileImage'] as String?;
+    // Backend returns relative paths like /uploads/... — prepend server base URL
+    final profileImage = (rawProfileImage != null && rawProfileImage.startsWith('/'))
+        ? '${ApiConfig.serverBaseUrl}$rawProfileImage'
+        : rawProfileImage;
 
     return Scaffold(
       backgroundColor: AppColors.black,

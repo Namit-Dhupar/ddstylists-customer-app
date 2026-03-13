@@ -2,7 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiConfig {
-  static const String baseUrl = 'https://dnd-stylists-api.onrender.com/api';
+  static const String serverBaseUrl = 'https://dnd-stylists-api.onrender.com';
+  static const String baseUrl = '$serverBaseUrl/api';
   static const String tokenKey = 'jwt_token';
   
   static final FlutterSecureStorage _storage = const FlutterSecureStorage();

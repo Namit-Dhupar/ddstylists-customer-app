@@ -113,7 +113,15 @@ final stylistCategoriesProvider = FutureProvider<List<String>>((ref) async {
   try {
     final dio = ApiConfig.createDio();
     final response = await dio.get('/stylists/categories');
-    return ['All', 'Favourites', ...List<String>.from(response.data['categories'] ?? [])];
+    final cats = List<String>.from(response.data['categories'] ?? []);
+    // Backend already includes 'All', so just insert 'Favourites' after it
+    final allIndex = cats.indexOf('All');
+    if (allIndex >= 0) {
+      cats.insert(allIndex + 1, 'Favourites');
+    } else {
+      cats.insertAll(0, ['All', 'Favourites']);
+    }
+    return cats;
   } catch (_) {
     return ['All', 'Favourites', 'Wedding', 'Corporate', 'Casual', 'Red Carpet', 'Maternity', 'Sustainable'];
   }

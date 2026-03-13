@@ -60,7 +60,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     switch (_currentScreen) {
       case AppScreen.splash:
         return SplashScreen(
-          onFinished: () => _navigateTo(AppScreen.onboarding),
+          onFinished: () {
+            final authState = ref.read(authProvider);
+            if (authState.isAuthenticated) {
+              _navigateTo(AppScreen.main);
+            } else {
+              _navigateTo(AppScreen.onboarding);
+            }
+          },
         );
       case AppScreen.onboarding:
         return OnboardingScreen(

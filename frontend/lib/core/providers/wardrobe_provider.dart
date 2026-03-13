@@ -17,11 +17,16 @@ class WardrobeItem {
   });
 
   factory WardrobeItem.fromJson(Map<String, dynamic> json) {
+    String url = json['imageUrl'] ?? '';
+    // Backend returns relative paths like /uploads/... — prepend server base URL
+    if (url.startsWith('/')) {
+      url = '${ApiConfig.serverBaseUrl}$url';
+    }
     return WardrobeItem(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       category: json['category'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
+      imageUrl: url,
     );
   }
 }
