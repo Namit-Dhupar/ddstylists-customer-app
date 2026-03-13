@@ -19,7 +19,16 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
   Future<void> _pickAndUploadImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
+    await _showUploadDialog(image);
+  }
 
+  Future<void> _captureAndUploadImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image == null) return;
+    await _showUploadDialog(image);
+  }
+
+  Future<void> _showUploadDialog(XFile image) async {
     String name = 'New Item';
     String category = ref.read(wardrobeCategoriesProvider).firstWhere((c) => c != 'All', orElse: () => 'Top Wear');
 
@@ -224,10 +233,23 @@ class _WardrobeScreenState extends ConsumerState<WardrobeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.gold,
-        onPressed: _isUploading ? null : _pickAndUploadImage,
-        child: const Icon(Icons.add, color: AppColors.black),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'camera',
+            backgroundColor: AppColors.cardDark,
+            onPressed: _isUploading ? null : _captureAndUploadImage,
+            child: const Icon(Icons.camera_alt, color: AppColors.gold, size: 20),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'gallery',
+            backgroundColor: AppColors.gold,
+            onPressed: _isUploading ? null : _pickAndUploadImage,
+            child: const Icon(Icons.add, color: AppColors.black),
+          ),
+        ],
       ),
     );
   }

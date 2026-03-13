@@ -34,3 +34,5 @@ services:
         sync: false
       - key: AGORA_APP_CERTIFICATE
         sync: false
+      - key: REMOVE_BG_API_KEY
+        sync: false

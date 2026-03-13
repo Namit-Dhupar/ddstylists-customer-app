@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.dd.ddclient
 
 import io.flutter.embedding.android.FlutterActivity
 

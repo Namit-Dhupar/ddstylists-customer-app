@@ -19,15 +19,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
-  Future<void> _uploadProfileImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+  Future<void> _showImageSourcePicker() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.cardDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: AppColors.greyDark, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 16),
+              const Text('Update Profile Photo', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppColors.gold),
+                title: const Text('Take Photo', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _uploadProfileImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: AppColors.gold),
+                title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _uploadProfileImage(ImageSource.gallery);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _uploadProfileImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
     if (image == null) return;
 
     setState(() => _isUploading = true);
     try {
       final dio = ApiConfig.createDio();
       final formData = FormData.fromMap({
-        'profileImage': await MultipartFile.fromFile(image.path),
+        'image': await MultipartFile.fromFile(image.path),
       });
 
       await dio.put('/users/profile-image', data: formData);
@@ -72,7 +116,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 24),
               // Avatar
               GestureDetector(
-                onTap: _isUploading ? null : _uploadProfileImage,
+                onTap: _isUploading ? null : _showImageSourcePicker,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [

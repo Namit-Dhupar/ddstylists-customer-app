@@ -34,9 +34,9 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildFeatureCard(
-                      context, 'Appointments', 
+                      context, 'Appointments', Icons.calendar_today_rounded,
                       'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600',
-                      () => onNavigate(2),
+                      () => onNavigate(4),
                       height: 180,
                     ),
                     const SizedBox(height: 12),
@@ -44,7 +44,7 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildFeatureCard(
-                            context, 'Stylists',
+                            context, 'Stylists', Icons.people_alt_rounded,
                             'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400',
                             () => onNavigate(1),
                             height: 160,
@@ -53,13 +53,24 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildFeatureCard(
-                            context, 'Wardrobe',
+                            context, 'Wardrobe', Icons.checkroom_rounded,
                             'https://images.unsplash.com/photo-1558816281-705b64df4202?w=600',
                             () => onNavigate(0),
                             height: 160,
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFeatureCard(
+                      context, 'Inspirations', Icons.auto_awesome_rounded,
+                      'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600',
+                      () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Inspirations coming soon!')),
+                        );
+                      },
+                      height: 180,
                     ),
                   ],
                 ),
@@ -72,7 +83,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context, String title, String imageUrl, VoidCallback onTap, {double height = 160}) {
+  Widget _buildFeatureCard(BuildContext context, String title, IconData icon, String imageUrl, VoidCallback onTap, {double height = 160}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -101,10 +112,17 @@ class HomeScreen extends StatelessWidget {
               ),
               Positioned(
                 bottom: 16, left: 16,
-                child: Text(title, style: GoogleFonts.playfairDisplay(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white,
-                  shadows: [const Shadow(blurRadius: 8, color: Colors.black54)],
-                )),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: AppColors.gold, size: 22),
+                    const SizedBox(width: 8),
+                    Text(title, style: GoogleFonts.playfairDisplay(
+                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white,
+                      shadows: [const Shadow(blurRadius: 8, color: Colors.black54)],
+                    )),
+                  ],
+                ),
               ),
             ],
           ),
