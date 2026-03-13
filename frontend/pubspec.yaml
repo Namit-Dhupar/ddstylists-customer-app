@@ -53,6 +53,16 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   custom_lint: ^0.6.4
   riverpod_lint: ^2.3.10
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  macos:
+    generate: true
+    image_path: "assets/logo.png"
+  image_path: "assets/logo.png"
+  min_sdk_size: 21
 
 flutter:
   uses-material-design: true
