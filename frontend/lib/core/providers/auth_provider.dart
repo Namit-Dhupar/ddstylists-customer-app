@@ -35,7 +35,7 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final Ref ref;
   AuthNotifier(this.ref) : super(const AuthState()) {
-    _checkAuth();
+    checkAuth();
   }
 
   final _dio = ApiConfig.createDio();
@@ -52,7 +52,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     ref.read(favouriteStylistsProvider.notifier).setInitial(favs);
   }
 
-  Future<void> _checkAuth() async {
+  Future<void> checkAuth() async {
     final token = await ApiConfig.getToken();
     if (token != null) {
       try {

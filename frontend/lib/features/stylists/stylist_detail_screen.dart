@@ -32,7 +32,7 @@ class _StylistDetailScreenState extends ConsumerState<StylistDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a date')));
       return;
     }
-    final success = await createAppointment(
+    final success = await ref.read(bookingActionProvider).createAppointment(
       stylistId: widget.stylist.id,
       date: _selectedDate!.toIso8601String(),
       time: _selectedTime,

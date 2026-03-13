@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/network/api_config.dart';
+import 'package:dio/dio.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});

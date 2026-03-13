@@ -33,7 +33,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await dio.put('/users/profile-image', data: formData);
       
       // Refresh user data
-      await ref.read(authProvider.notifier).fetchUser();
+      await ref.read(authProvider.notifier).checkAuth();
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile image updated')));
