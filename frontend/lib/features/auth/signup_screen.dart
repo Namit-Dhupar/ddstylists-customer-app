@@ -450,7 +450,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           )),
           const SizedBox(height: 12),
           Row(
-            children: ['Womenswear', 'Menswear', 'Both'].map((pref) {
+            children: ['WomenWear', 'MenWear', 'Both'].map((pref) {
               final isSelected = _stylePreference == pref;
               return Expanded(
                 child: GestureDetector(
