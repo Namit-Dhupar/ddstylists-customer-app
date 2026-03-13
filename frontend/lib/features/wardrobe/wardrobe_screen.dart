@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/providers/wardrobe_provider.dart';
+import '../../core/widgets/smart_image.dart';
 
 class WardrobeScreen extends ConsumerStatefulWidget {
   const WardrobeScreen({super.key});
@@ -296,7 +297,7 @@ class _WardrobeItemCardState extends ConsumerState<_WardrobeItemCard> {
                 onTap: () => Navigator.pop(context),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
+                  child: SmartImage(
                     widget.item.imageUrl,
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => Container(
@@ -321,7 +322,7 @@ class _WardrobeItemCardState extends ConsumerState<_WardrobeItemCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(widget.item.imageUrl, fit: BoxFit.cover,
+              SmartImage(widget.item.imageUrl, fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(color: AppColors.cardDark),
               ),
               Container(

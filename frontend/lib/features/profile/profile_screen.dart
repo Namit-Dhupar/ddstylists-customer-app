@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/network/api_config.dart';
+import '../../core/widgets/smart_image.dart';
 import 'change_password_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -128,7 +129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       radius: 50,
                       backgroundColor: AppColors.cardDark,
                       backgroundImage: profileImage != null && profileImage.isNotEmpty
-                        ? NetworkImage(profileImage)
+                        ? SmartImage.providerFor(profileImage)
                         : null,
                       child: profileImage == null || profileImage.isEmpty
                         ? const Icon(Icons.person, size: 40, color: AppColors.greyMid)

@@ -1,4 +1,8 @@
 const WardrobeItem = require('../models/WardrobeItem');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
 
 /**
  * GET /api/wardrobe
@@ -22,6 +26,7 @@ exports.listItems = async (req, res) => {
 
 /**
  * POST /api/wardrobe
+ * Stores image as base64 data URI in MongoDB (no filesystem dependency)
  */
 exports.addItem = async (req, res) => {
   try {
@@ -33,13 +38,11 @@ exports.addItem = async (req, res) => {
 
     let imageUrl = '';
     if (req.file) {
+      const fileBuffer = fs.readFileSync(req.file.path);
+
+      // Try background removal with remove.bg
       if (process.env.REMOVE_BG_API_KEY) {
         try {
-          const axios = require('axios');
-          const FormData = require('form-data');
-          const fs = require('fs');
-          const path = require('path');
-
           const formData = new FormData();
           formData.append('size', 'auto');
           formData.append('image_file', fs.createReadStream(req.file.path), req.file.filename);
@@ -52,20 +55,25 @@ exports.addItem = async (req, res) => {
             responseType: 'arraybuffer',
           });
 
-          const processedFileName = `nobg_${Date.now()}_${req.file.filename}.png`;
-          const processedFilePath = path.join(__dirname, '..', '..', 'uploads', processedFileName);
-          fs.writeFileSync(processedFilePath, bgResponse.data);
-
-          imageUrl = `/uploads/${processedFileName}`;
-          // Delete original file to save space
-          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          // Store the processed (bg-removed) image as base64
+          const processedBase64 = Buffer.from(bgResponse.data).toString('base64');
+          imageUrl = `data:image/png;base64,${processedBase64}`;
         } catch (apiErr) {
           console.error('remove.bg API Error:', apiErr.message);
-          imageUrl = `/uploads/${req.file.filename}`; // fallback to original
+          // Fallback: store original image as base64
+          const mimeType = req.file.mimetype || 'image/png';
+          const base64 = fileBuffer.toString('base64');
+          imageUrl = `data:${mimeType};base64,${base64}`;
         }
       } else {
-        imageUrl = `/uploads/${req.file.filename}`;
+        // No remove.bg key: store original image as base64
+        const mimeType = req.file.mimetype || 'image/png';
+        const base64 = fileBuffer.toString('base64');
+        imageUrl = `data:${mimeType};base64,${base64}`;
       }
+
+      // Clean up the temp uploaded file
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     } else if (req.body.imageUrl) {
       imageUrl = req.body.imageUrl;
     }

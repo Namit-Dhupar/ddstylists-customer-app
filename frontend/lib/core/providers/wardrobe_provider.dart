@@ -18,7 +18,8 @@ class WardrobeItem {
 
   factory WardrobeItem.fromJson(Map<String, dynamic> json) {
     String url = json['imageUrl'] ?? '';
-    // Backend returns relative paths like /uploads/... — prepend server base URL
+    // Backend now stores base64 data URIs (data:image/...) — no transformation needed
+    // Only prepend server base URL for legacy relative paths like /uploads/...
     if (url.startsWith('/')) {
       url = '${ApiConfig.serverBaseUrl}$url';
     }

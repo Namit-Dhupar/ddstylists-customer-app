@@ -46,8 +46,16 @@ exports.updateProfileImage = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: 'No image uploaded.' });
     }
-    // For now, store the file path. In production, upload to S3/Cloudinary
-    const imageUrl = `/uploads/${req.file.filename}`;
+    // Store image as base64 data URI in MongoDB (persists across redeploys)
+    const fs = require('fs');
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const mimeType = req.file.mimetype || 'image/png';
+    const base64 = fileBuffer.toString('base64');
+    const imageUrl = `data:${mimeType};base64,${base64}`;
+
+    // Clean up temp file
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
     const user = await User.findByIdAndUpdate(req.user.id, { profileImage: imageUrl }, { new: true })
       .select('-passwordHash');
     return res.status(200).json({ message: 'Profile image updated', user });
