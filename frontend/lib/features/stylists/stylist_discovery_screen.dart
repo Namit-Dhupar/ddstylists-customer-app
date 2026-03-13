@@ -15,6 +15,8 @@ class StylistDiscoveryScreen extends ConsumerStatefulWidget {
 
 class _StylistDiscoveryScreenState extends ConsumerState<StylistDiscoveryScreen> {
   Map<String, dynamic> _filters = {};
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +35,27 @@ class _StylistDiscoveryScreenState extends ConsumerState<StylistDiscoveryScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  Text('D&D Stylists', style: GoogleFonts.playfairDisplay(
-                    fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.gold,
-                  )),
-                  const Spacer(),
+                  if (_isSearching)
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          hintText: 'Search by name or specialty...',
+                          prefixIcon: Icon(Icons.search, color: AppColors.greyMid),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        onChanged: (val) {
+                          ref.read(searchQueryProvider.notifier).state = val;
+                        },
+                      ),
+                    )
+                  else
+                    Text('D&D Stylists', style: GoogleFonts.playfairDisplay(
+                      fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.gold,
+                    )),
+                  if (!_isSearching) const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.tune, color: AppColors.gold),
                     onPressed: () async {
@@ -50,8 +69,16 @@ class _StylistDiscoveryScreenState extends ConsumerState<StylistDiscoveryScreen>
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.search, color: Colors.white),
-                    onPressed: () {},
+                    icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _isSearching = !_isSearching;
+                        if (!_isSearching) {
+                          _searchController.clear();
+                          ref.read(searchQueryProvider.notifier).state = '';
+                        }
+                      });
+                    },
                   ),
                 ],
               ),
@@ -164,13 +191,16 @@ class _StylistDiscoveryScreenState extends ConsumerState<StylistDiscoveryScreen>
   }
 }
 
-class _StylistCard extends StatelessWidget {
+class _StylistCard extends ConsumerWidget {
   final Stylist stylist;
   final VoidCallback onTap;
   const _StylistCard({required this.stylist, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favs = ref.watch(favouriteStylistsProvider);
+    final isFav = favs.contains(stylist.id);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -218,7 +248,23 @@ class _StylistCard extends StatelessWidget {
               // Favorite
               Positioned(
                 top: 8, left: 8,
-                child: Icon(Icons.favorite_border, color: Colors.white.withOpacity(0.7), size: 20),
+                child: GestureDetector(
+                  onTap: () {
+                    ref.read(favouriteStylistsProvider.notifier).toggle(stylist.id);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.black45,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isFav ? Icons.favorite : Icons.favorite_border,
+                      color: isFav ? Colors.red : Colors.white.withOpacity(0.8),
+                      size: 20,
+                    ),
+                  ),
+                ),
               ),
               // Info at bottom
               Positioned(

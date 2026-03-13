@@ -94,3 +94,70 @@ exports.getOrCreateConversation = async (req, res) => {
     return res.status(500).json({ error: 'Failed to create conversation.' });
   }
 };
+
+/**
+ * DELETE /api/chat/conversations/:id
+ */
+exports.deleteConversation = async (req, res) => {
+  try {
+    const conversation = await Conversation.findOne({
+      _id: req.params.id,
+      participants: req.user.id,
+    });
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found.' });
+    }
+
+    // Delete all messages in the conversation
+    await Message.deleteMany({ conversationId: conversation._id });
+    // Delete the conversation
+    await Conversation.findByIdAndDelete(conversation._id);
+
+    return res.status(200).json({ message: 'Conversation deleted.' });
+  } catch (error) {
+    console.error('DeleteConversation Error:', error);
+    return res.status(500).json({ error: 'Failed to delete conversation.' });
+  }
+};
+
+/**
+ * POST /api/chat/:conversationId/messages
+ * Send a message (text or image)
+ */
+exports.sendMessage = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { receiverId, text, type = 'text' } = req.body;
+
+    if (!receiverId) {
+      return res.status(400).json({ error: 'receiverId is required.' });
+    }
+
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    } else if (req.body.imageUrl) {
+      imageUrl = req.body.imageUrl;
+    }
+
+    const message = await Message.create({
+      conversationId,
+      senderId: req.user.id,
+      receiverId,
+      text: text || '',
+      type: imageUrl ? 'image' : type,
+      imageUrl,
+    });
+
+    // Update conversation metadata
+    await Conversation.findByIdAndUpdate(conversationId, {
+      lastMessage: text || (imageUrl ? '📷 Image' : ''),
+      lastMessageAt: new Date(),
+    });
+
+    return res.status(201).json({ message: 'Message sent', data: message });
+  } catch (error) {
+    console.error('SendMessage Error:', error);
+    return res.status(500).json({ error: 'Failed to send message.' });
+  }
+};

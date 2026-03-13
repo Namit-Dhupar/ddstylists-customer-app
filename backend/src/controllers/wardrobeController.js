@@ -33,7 +33,39 @@ exports.addItem = async (req, res) => {
 
     let imageUrl = '';
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
+      if (process.env.REMOVE_BG_API_KEY) {
+        try {
+          const axios = require('axios');
+          const FormData = require('form-data');
+          const fs = require('fs');
+          const path = require('path');
+
+          const formData = new FormData();
+          formData.append('size', 'auto');
+          formData.append('image_file', fs.createReadStream(req.file.path), req.file.filename);
+
+          const bgResponse = await axios.post('https://api.remove.bg/v1.0/removebg', formData, {
+            headers: {
+              ...formData.getHeaders(),
+              'X-Api-Key': process.env.REMOVE_BG_API_KEY,
+            },
+            responseType: 'arraybuffer',
+          });
+
+          const processedFileName = `nobg_${Date.now()}_${req.file.filename}.png`;
+          const processedFilePath = path.join(__dirname, '..', '..', 'uploads', processedFileName);
+          fs.writeFileSync(processedFilePath, bgResponse.data);
+
+          imageUrl = `/uploads/${processedFileName}`;
+          // Delete original file to save space
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        } catch (apiErr) {
+          console.error('remove.bg API Error:', apiErr.message);
+          imageUrl = `/uploads/${req.file.filename}`; // fallback to original
+        }
+      } else {
+        imageUrl = `/uploads/${req.file.filename}`;
+      }
     } else if (req.body.imageUrl) {
       imageUrl = req.body.imageUrl;
     }

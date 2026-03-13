@@ -173,3 +173,93 @@ exports.getMe = async (req, res) => {
     return res.status(500).json({ error: 'Failed to get user profile.' });
   }
 };
+
+/**
+ * GET /api/auth/check-username?username=xxx
+ */
+exports.checkUsername = async (req, res) => {
+  try {
+    const { username } = req.query;
+    if (!username) {
+      return res.status(400).json({ error: 'username query param is required.' });
+    }
+    const existing = await User.findOne({ username: username.toLowerCase() });
+    return res.status(200).json({ available: !existing });
+  } catch (error) {
+    console.error('CheckUsername Error:', error);
+    return res.status(500).json({ error: 'Failed to check username.' });
+  }
+};
+
+/**
+ * POST /api/auth/forgot-password
+ */
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Return success even if user not found (security best practice)
+      return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+    }
+
+    // Generate a reset token (valid for 1 hour)
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    user.passwordResetToken = resetTokenHash;
+    user.passwordResetExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    // In production, send email with reset link containing resetToken
+    // For now, return success message
+    console.log(`Password reset token for ${email}: ${resetToken}`);
+
+    return res.status(200).json({
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    });
+  } catch (error) {
+    console.error('ForgotPassword Error:', error);
+    return res.status(500).json({ error: 'Failed to process password reset.' });
+  }
+};
+
+/**
+ * PUT /api/auth/change-password
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !user.passwordHash) {
+      return res.status(404).json({ error: 'User not found or social login user.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 12);
+    await user.save();
+
+    return res.status(200).json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('ChangePassword Error:', error);
+    return res.status(500).json({ error: 'Failed to change password.' });
+  }
+};

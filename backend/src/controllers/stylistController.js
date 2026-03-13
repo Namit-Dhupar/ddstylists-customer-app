@@ -7,12 +7,20 @@ const Review = require('../models/Review');
  */
 exports.listStylists = async (req, res) => {
   try {
-    const { category, location, minRating, minPrice, maxPrice, sortBy, page = 1, limit = 20 } = req.query;
+    const { category, location, minRating, minPrice, maxPrice, sortBy, search, page = 1, limit = 20 } = req.query;
 
     const filter = { isApproved: true };
 
     if (category && category !== 'All') {
       filter.speciality = { $in: [category] };
+    }
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      filter.$or = [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { speciality: searchRegex },
+      ];
     }
     if (location) {
       filter.location = { $regex: location, $options: 'i' };

@@ -78,28 +78,68 @@ class StylistService {
 /// Selected category state
 final selectedCategoryProvider = StateProvider<String>((ref) => 'All');
 
+/// Search query state
+final searchQueryProvider = StateProvider<String>((ref) => '');
+
+/// Favourite stylists state
+class FavouriteStylistsNotifier extends StateNotifier<Set<String>> {
+  FavouriteStylistsNotifier() : super({});
+
+  Future<void> toggle(String stylistId) async {
+    try {
+      final dio = ApiConfig.createDio();
+      await dio.put('/users/favourites/$stylistId');
+      if (state.contains(stylistId)) {
+        state = {...state}..remove(stylistId);
+      } else {
+        state = {...state}..add(stylistId);
+      }
+    } catch (e) {
+      // Ignore for now
+    }
+  }
+
+  void setInitial(List<String> favourites) {
+    state = favourites.toSet();
+  }
+}
+
+final favouriteStylistsProvider = StateNotifierProvider<FavouriteStylistsNotifier, Set<String>>((ref) {
+  return FavouriteStylistsNotifier();
+});
+
 /// Fetch categories from backend
 final stylistCategoriesProvider = FutureProvider<List<String>>((ref) async {
   try {
     final dio = ApiConfig.createDio();
     final response = await dio.get('/stylists/categories');
-    return List<String>.from(response.data['categories'] ?? ['All']);
+    return ['All', 'Favourites', ...List<String>.from(response.data['categories'] ?? [])];
   } catch (_) {
-    return ['All', 'Wedding', 'Corporate', 'Casual', 'Red Carpet', 'Maternity', 'Sustainable'];
+    return ['All', 'Favourites', 'Wedding', 'Corporate', 'Casual', 'Red Carpet', 'Maternity', 'Sustainable'];
   }
 });
 
-/// Fetch stylists from backend with category filter
+/// Fetch stylists from backend with category and search filter
 final filteredStylistsProvider = FutureProvider<List<Stylist>>((ref) async {
   final category = ref.watch(selectedCategoryProvider);
+  final search = ref.watch(searchQueryProvider);
+  final favs = ref.watch(favouriteStylistsProvider);
+
   try {
     final dio = ApiConfig.createDio();
     final queryParams = <String, dynamic>{};
-    if (category != 'All') queryParams['category'] = category;
+    if (category != 'All' && category != 'Favourites') queryParams['category'] = category;
+    if (search.isNotEmpty) queryParams['search'] = search;
 
     final response = await dio.get('/stylists', queryParameters: queryParams);
     final List<dynamic> data = response.data['stylists'] ?? [];
-    return data.map((json) => Stylist.fromJson(json)).toList();
+    var stylists = data.map((json) => Stylist.fromJson(json)).toList();
+
+    if (category == 'Favourites') {
+      stylists = stylists.where((s) => favs.contains(s.id)).toList();
+    }
+
+    return stylists;
   } catch (_) {
     return [];
   }
@@ -115,3 +155,4 @@ final stylistDetailProvider = FutureProvider.family<Stylist?, String>((ref, id) 
     return null;
   }
 });
+

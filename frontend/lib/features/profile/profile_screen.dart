@@ -1,14 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import '../../core/constants/app_theme.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/network/api_config.dart';
+import 'change_password_screen.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _uploadProfileImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+
+    setState(() => _isUploading = true);
+    try {
+      final dio = ApiConfig.createDio();
+      final formData = FormData.fromMap({
+        'profileImage': await MultipartFile.fromFile(image.path),
+      });
+
+      await dio.put('/users/profile-image', data: formData);
+      
+      // Refresh user data
+      await ref.read(authProvider.notifier).fetchUser();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile image updated')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to update profile image')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user;
 
@@ -29,15 +71,34 @@ class ProfileScreen extends ConsumerWidget {
               )),
               const SizedBox(height: 24),
               // Avatar
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: AppColors.cardDark,
-                backgroundImage: profileImage != null && profileImage.isNotEmpty
-                  ? NetworkImage(profileImage)
-                  : null,
-                child: profileImage == null || profileImage.isEmpty
-                  ? const Icon(Icons.person, size: 40, color: AppColors.greyMid)
-                  : null,
+              GestureDetector(
+                onTap: _isUploading ? null : _uploadProfileImage,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: AppColors.cardDark,
+                      backgroundImage: profileImage != null && profileImage.isNotEmpty
+                        ? NetworkImage(profileImage)
+                        : null,
+                      child: profileImage == null || profileImage.isEmpty
+                        ? const Icon(Icons.person, size: 40, color: AppColors.greyMid)
+                        : null,
+                    ),
+                    if (_isUploading)
+                      const CircularProgressIndicator(color: AppColors.gold),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: AppColors.gold, shape: BoxShape.circle),
+                        child: const Icon(Icons.camera_alt, color: AppColors.black, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               Text(
@@ -52,7 +113,7 @@ class ProfileScreen extends ConsumerWidget {
               // Settings list
               _settingsGroup([
                 _SettingsItem(icon: Icons.lock_outline, title: 'Change Password', onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Change password coming soon')));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
                 }),
                 _SettingsItem(icon: Icons.language, title: 'Language', trailing: 'English', onTap: () {}),
                 _SettingsItem(icon: Icons.support_agent, title: 'Contact Us', onTap: () {
@@ -87,7 +148,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  static Widget _settingsGroup(List<_SettingsItem> items) {
+  Widget _settingsGroup(List<_SettingsItem> items) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(

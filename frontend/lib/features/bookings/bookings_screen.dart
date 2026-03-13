@@ -97,12 +97,12 @@ class BookingsScreen extends ConsumerWidget {
   }
 }
 
-class _BookingCard extends StatelessWidget {
+class _BookingCard extends ConsumerWidget {
   final Booking booking;
   const _BookingCard({required this.booking});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       height: 200,
@@ -129,6 +129,18 @@ class _BookingCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (booking.status == 'Cancelled')
+              Positioned(
+                top: 16, right: 16,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('Cancelled', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
             Positioned(
               bottom: 16, left: 16, right: 16,
               child: Column(
@@ -137,20 +149,67 @@ class _BookingCard extends StatelessWidget {
                   Text(booking.stylistName, style: GoogleFonts.playfairDisplay(
                     fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic,
                   )),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(booking.packageType, style: const TextStyle(color: AppColors.goldLight, fontSize: 13)),
-                      const SizedBox(width: 12),
-                      const Icon(Icons.calendar_today, color: AppColors.greyLight, size: 12),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          '${booking.date}, ${booking.time}',
-                          style: const TextStyle(color: AppColors.greyLight, fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Text(booking.packageType, style: const TextStyle(color: AppColors.goldLight, fontSize: 13)),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.calendar_today, color: AppColors.greyLight, size: 12),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                '${booking.date}, ${booking.time}',
+                                style: const TextStyle(color: AppColors.greyLight, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      if (booking.status == 'Upcoming')
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                backgroundColor: AppColors.cardDark,
+                                title: const Text('Cancel Appointment?', style: TextStyle(color: Colors.white)),
+                                content: const Text('Are you sure you want to cancel this appointment?', style: TextStyle(color: AppColors.greyLight)),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('No', style: TextStyle(color: AppColors.greyMid)),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Yes, Cancel', style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              )
+                            ).then((confirm) {
+                              if (confirm == true) {
+                                ref.read(bookingActionProvider).cancelAppointment(booking.id).then((success) {
+                                  if (success && context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Appointment cancelled')));
+                                  }
+                                });
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red),
+                            ),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
                     ],
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../network/api_config.dart';
 
 /// Booking model
@@ -40,13 +41,19 @@ class Booking {
       stylistSpec = specs?.isNotEmpty == true ? specs!.first : '';
     }
 
+    String formattedDate = json['date'] ?? '';
+    try {
+      final dt = DateTime.parse(formattedDate);
+      formattedDate = DateFormat('EEE, d MMM yyyy').format(dt);
+    } catch (_) {}
+
     return Booking(
       id: json['_id'] ?? '',
       stylistId: stylist is Map ? (stylist['_id'] ?? '') : (stylist?.toString() ?? ''),
       stylistName: stylistName,
       stylistImage: stylistImage,
       stylistSpeciality: stylistSpec,
-      date: json['date'] ?? '',
+      date: formattedDate,
       time: json['time'] ?? '',
       status: json['status'] ?? 'Upcoming',
       packageType: json['packageType'] ?? 'Custom',
@@ -71,23 +78,43 @@ final bookingsProvider = FutureProvider<List<Booking>>((ref) async {
   }
 });
 
-/// Create appointment
-Future<bool> createAppointment({
-  required String stylistId,
-  required String date,
-  required String time,
-  String packageType = 'Custom',
-}) async {
-  try {
-    final dio = ApiConfig.createDio();
-    await dio.post('/appointments', data: {
-      'stylistId': stylistId,
-      'date': date,
-      'time': time,
-      'packageType': packageType,
-    });
-    return true;
-  } catch (_) {
-    return false;
+/// Actions provider
+final bookingActionProvider = Provider((ref) => BookingActions(ref));
+
+class BookingActions {
+  final Ref ref;
+  BookingActions(this.ref);
+
+  Future<bool> createAppointment({
+    required String stylistId,
+    required String date,
+    required String time,
+    String packageType = 'Custom',
+  }) async {
+    try {
+      final dio = ApiConfig.createDio();
+      await dio.post('/appointments', data: {
+        'stylistId': stylistId,
+        'date': date,
+        'time': time,
+        'packageType': packageType,
+      });
+      ref.invalidate(bookingsProvider);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> cancelAppointment(String appointmentId) async {
+    try {
+      final dio = ApiConfig.createDio();
+      await dio.put('/appointments/$appointmentId/cancel');
+      ref.invalidate(bookingsProvider);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 }
+

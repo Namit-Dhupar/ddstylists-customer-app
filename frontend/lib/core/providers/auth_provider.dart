@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/api_config.dart';
+import 'stylist_provider.dart';
 
 /// Auth state
 class AuthState {
@@ -32,20 +33,35 @@ class AuthState {
 
 /// Auth provider — connects to live backend
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(const AuthState()) {
+  final Ref ref;
+  AuthNotifier(this.ref) : super(const AuthState()) {
     _checkAuth();
   }
 
   final _dio = ApiConfig.createDio();
+
+  void _syncFavs(Map<String, dynamic>? data) {
+    if (data == null) return;
+    final List<String> favs = [];
+    if (data['favouriteStylists'] != null) {
+      favs.addAll((data['favouriteStylists'] as List).map((e) {
+        if (e is Map) return e['_id'].toString();
+        return e.toString();
+      }));
+    }
+    ref.read(favouriteStylistsProvider.notifier).setInitial(favs);
+  }
 
   Future<void> _checkAuth() async {
     final token = await ApiConfig.getToken();
     if (token != null) {
       try {
         final response = await _dio.get('/auth/me');
+        final user = response.data['user'] as Map<String, dynamic>;
+        _syncFavs(user);
         state = AuthState(
           isAuthenticated: true,
-          user: response.data['user'] as Map<String, dynamic>,
+          user: user,
         );
       } catch (_) {
         await ApiConfig.clearToken();
@@ -63,9 +79,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
       final data = response.data;
       await ApiConfig.saveToken(data['token']);
+      final user = data['user'] as Map<String, dynamic>;
+      _syncFavs(user);
       state = AuthState(
         isAuthenticated: true,
-        user: data['user'] as Map<String, dynamic>,
+        user: user,
       );
       return true;
     } catch (e) {
@@ -101,9 +119,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
       final data = response.data;
       await ApiConfig.saveToken(data['token']);
+      final user = data['user'] as Map<String, dynamic>;
+      _syncFavs(user);
       state = AuthState(
         isAuthenticated: true,
-        user: data['user'] as Map<String, dynamic>,
+        user: user,
       );
       return true;
     } catch (e) {
@@ -131,9 +151,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
       final data = response.data;
       await ApiConfig.saveToken(data['token']);
+      final user = data['user'] as Map<String, dynamic>;
+      _syncFavs(user);
       state = AuthState(
         isAuthenticated: true,
-        user: data['user'] as Map<String, dynamic>,
+        user: user,
       );
       return true;
     } catch (e) {
@@ -160,5 +182,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
+  return AuthNotifier(ref);
 });
+

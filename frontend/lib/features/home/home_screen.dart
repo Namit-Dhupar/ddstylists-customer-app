@@ -24,21 +24,6 @@ class HomeScreen extends StatelessWidget {
                       fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.gold,
                     )),
                     const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.gold,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle, color: AppColors.black, size: 16),
-                          SizedBox(width: 4),
-                          Text('Upload Completed', style: TextStyle(color: AppColors.black, fontSize: 12, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -69,23 +54,12 @@ class HomeScreen extends StatelessWidget {
                         Expanded(
                           child: _buildFeatureCard(
                             context, 'Wardrobe',
-                            'https://images.unsplash.com/photo-1558171813-01a19a8e4fae?w=400',
+                            'https://images.unsplash.com/photo-1558816281-705b64df4202?w=600',
                             () => onNavigate(0),
                             height: 160,
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFeatureCard(
-                      context, 'Inspirations',
-                      'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600',
-                      () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Inspirations coming soon!')),
-                        );
-                      },
-                      height: 180,
                     ),
                   ],
                 ),

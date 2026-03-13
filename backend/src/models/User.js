@@ -19,7 +19,11 @@ const userSchema = new mongoose.Schema({
     enum: ['Local', 'Apple', 'Google', 'Facebook'],
     default: 'Local'
   },
-  favouriteStylists: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Stylist' }]
+  favouriteStylists: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Stylist' }],
+  passwordResetToken: { type: String },
+  passwordResetExpires: { type: Date },
+  country: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
+
